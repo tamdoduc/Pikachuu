@@ -17,15 +17,25 @@ public class GameManager : MonoBehaviour
     public AudioClip mismatchSound;
     private AudioSource audioSource;
 
-    [Header("particle")] public ParticleSystem smokeParticle1, smokeParticle2;
-    
+    [Header("Hint Settings")]
+    public float hintHighlightDuration = 2f;
+    public float blinkInterval = 0.3f;
+
+    [HideInInspector] public Tile lastHintedTile1, lastHintedTile2;
+    private Coroutine hintCoroutine;
 
     private void Awake()
     {
-        if (instance == null) instance = this;
-        else Destroy(gameObject);
-
-        // Khởi tạo AudioSource
+        if (instance == null)
+        {
+            instance = this;
+          //  DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+        grid = new GameObject[rows + 2, cols + 2];
         audioSource = gameObject.AddComponent<AudioSource>();
         if (audioSource == null)
         {
@@ -35,7 +45,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        grid = new GameObject[rows + 2, cols + 2];
+
         GenerateBoard();
         lineRenderer.positionCount = 0;
     }
@@ -101,8 +111,6 @@ public class GameManager : MonoBehaviour
         if (canConnect)
         {
             DrawConnectionLine(tile1.transform.position, tile2.transform.position, pos1, pos2);
-            Debug.Log("?????");
-            
             return true;
         }
         return false;
@@ -291,14 +299,14 @@ public class GameManager : MonoBehaviour
             for (int j = 1; j <= cols; j++)
             {
                 Tile tile1 = grid[i, j]?.GetComponent<Tile>();
-                if (tile1 == null) continue;
+                if (tile1 == null || tile1 == null) continue;
 
                 for (int x = 1; x <= rows; x++)
                 {
                     for (int y = 1; y <= cols; y++)
                     {
                         Tile tile2 = grid[x, y]?.GetComponent<Tile>();
-                        if (tile2 == null || tile1 == tile2) continue;
+                        if (tile2 == null || tile1 == tile2 || tile2 == null) continue;
                         if (CanConnect(tile1, tile2))
                             return false;
                     }
@@ -343,7 +351,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Phương thức để phát âm thanh
     public void PlaySound(bool isMatch)
     {
         if (audioSource == null) return;
@@ -354,4 +361,82 @@ public class GameManager : MonoBehaviour
             audioSource.PlayOneShot(clipToPlay);
         }
     }
-}
+
+    public void Hint()
+    {
+        if (hintCoroutine != null)
+        {
+            StopCoroutine(hintCoroutine);
+            hintCoroutine = null;
+        }
+
+        if (lastHintedTile1 != null && lastHintedTile1 != null && lastHintedTile1.highlightBorder != null)
+            lastHintedTile1.SetHighlight(false);
+        if (lastHintedTile2 != null && lastHintedTile2 != null && lastHintedTile2.highlightBorder != null)
+            lastHintedTile2.SetHighlight(false);
+
+        lastHintedTile1 = null;
+        lastHintedTile2 = null;
+
+        for (int i = 1; i <= rows; i++)
+        {
+            for (int j = 1; j <= cols; j++)
+            {
+                if (grid[i, j] == null) continue;
+                Tile tile1 = grid[i, j].GetComponent<Tile>();
+                if (tile1 == null || tile1.GetComponent<SpriteRenderer>() == null) continue;
+
+                for (int x = 1; x <= rows; x++)
+                {
+                    for (int y = 1; y <= cols; y++)
+                    {
+                        if (grid[x, y] == null) continue;
+                        Tile tile2 = grid[x, y].GetComponent<Tile>();
+                        if (tile2 == null || tile1 == tile2 || tile2.GetComponent<SpriteRenderer>() == null) continue;
+
+                        if (tile1.GetComponent<SpriteRenderer>().sprite == tile2.GetComponent<SpriteRenderer>().sprite &&
+                            CanConnect(tile1, tile2))
+                        {
+                            lastHintedTile1 = tile1;
+                            lastHintedTile2 = tile2;
+                            hintCoroutine = StartCoroutine(BlinkHintHighlight());
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        Debug.Log("No matching pair found for hint.");
+    }
+
+    private IEnumerator BlinkHintHighlight()
+    {
+        float elapsedTime = 0f;
+        bool isVisible = true;
+
+        while (elapsedTime < hintHighlightDuration)
+        {
+            if (lastHintedTile1 == null || lastHintedTile1 == null || lastHintedTile1.highlightBorder == null ||
+                lastHintedTile2 == null || lastHintedTile2 == null || lastHintedTile2.highlightBorder == null)
+            {
+                yield break;
+            }
+
+            lastHintedTile1.SetHighlight(isVisible);
+            lastHintedTile2.SetHighlight(isVisible);
+
+            isVisible = !isVisible;
+            elapsedTime += blinkInterval;
+
+            yield return new WaitForSeconds(blinkInterval);
+        }
+
+        if (lastHintedTile1 != null && lastHintedTile1 != null && lastHintedTile1.highlightBorder != null)
+            lastHintedTile1.SetHighlight(false);
+        if (lastHintedTile2 != null && lastHintedTile2 != null && lastHintedTile2.highlightBorder != null)
+            lastHintedTile2.SetHighlight(false);
+
+        hintCoroutine = null;
+    }
+}         

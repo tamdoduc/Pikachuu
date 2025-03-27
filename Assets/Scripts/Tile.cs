@@ -8,13 +8,14 @@ public class Tile : MonoBehaviour
     private bool isSelected = false;
     public static Tile firstSelected, secondSelected;
     public Vector2Int gridPosition;
-    private GameObject highlightBorder;
+    [HideInInspector] public GameObject highlightBorder;
 
     void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         if (spriteRenderer == null)
         {
+            Debug.LogError($"SpriteRenderer component not found on {gameObject.name}. Please attach a SpriteRenderer to this GameObject.");
             return;
         }
 
@@ -34,6 +35,7 @@ public class Tile : MonoBehaviour
     {
         if (spriteRenderer == null)
         {
+            Debug.LogWarning($"Cannot set sprite on {gameObject.name}: SpriteRenderer is null.");
             return;
         }
         if (sprite != null)
@@ -77,6 +79,7 @@ public class Tile : MonoBehaviour
 
         bool isMatch = firstSelected.spriteRenderer.sprite == secondSelected.spriteRenderer.sprite &&
                        GameManager.instance.CanConnect(firstSelected, secondSelected);
+
         if (GameManager.instance != null)
         {
             GameManager.instance.PlaySound(isMatch);
@@ -113,5 +116,22 @@ public class Tile : MonoBehaviour
     {
         if (firstSelected == this) firstSelected = null;
         if (secondSelected == this) secondSelected = null;
+
+        GameManager manager = GameManager.instance;
+        if (manager != null)
+        {
+            if (manager.lastHintedTile1 == this)
+                manager.lastHintedTile1 = null;
+            if (manager.lastHintedTile2 == this)
+                manager.lastHintedTile2 = null;
+        }
+    }
+
+    public void SetHighlight(bool isActive)
+    {
+        if (highlightBorder != null)
+        {
+            highlightBorder.SetActive(isActive);
+        }
     }
 }
