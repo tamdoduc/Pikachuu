@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using System.Collections;
+using DG.Tweening;
+using Unity.VisualScripting.FullSerializer;
+using UnityEngine.Serialization;
 
 public class GameManager : MonoBehaviour
 {
@@ -8,52 +11,48 @@ public class GameManager : MonoBehaviour
     public GameObject tilePrefab;
     public Sprite[] pikachuSprites;
     public int rows, cols;
-    public float tileSize = 1.1f;
     private GameObject[,] grid;
     public LineRenderer lineRenderer;
 
-    [Header("Sound Effects")]
-    public AudioClip matchSound;
+    [Header("Sound Effects")] public AudioClip matchSound;
     public AudioClip mismatchSound;
     private AudioSource audioSource;
 
-    [Header("Hint Settings")]
-    public float hintHighlightDuration = 2f;
+    [Header("Hint Settings")] public float hintHighlightDuration = 2f;
     public float blinkInterval = 0.3f;
 
+    float spacingX, spacingY;
+    
     [HideInInspector] public Tile lastHintedTile1, lastHintedTile2;
     private Coroutine hintCoroutine;
+    public float offsetYAxis;
 
     private void Awake()
     {
         if (instance == null)
         {
             instance = this;
-          //  DontDestroyOnLoad(gameObject);
         }
         else
         {
             Destroy(gameObject);
         }
-        grid = new GameObject[rows + 2, cols + 2];
-        audioSource = gameObject.AddComponent<AudioSource>();
-        if (audioSource == null)
-        {
-            Debug.LogError("Failed to add AudioSource component to GameManager.");
-        }
     }
 
     void Start()
     {
-
         GenerateBoard();
-        lineRenderer.positionCount = 0;
+        
     }
 
     void GenerateBoard()
     {
+        lineRenderer.positionCount = 0;
+        spacingX = tilePrefab.GetComponent<BoxCollider2D>().size.x;
+        spacingY = tilePrefab.GetComponent<BoxCollider2D>().size.y;
+        grid = new GameObject[rows + 2, cols + 2];
         List<Sprite> usedSprites = GenerateShuffledSprites();
-        PlaceTiles(usedSprites);
+        StartCoroutine( SetUpTiles(usedSprites));
     }
 
     List<Sprite> GenerateShuffledSprites()
@@ -70,27 +69,29 @@ public class GameManager : MonoBehaviour
                 sprites.Add(randomSprite);
             }
         }
+
         Shuffle(sprites);
         return sprites;
     }
 
-    void PlaceTiles(List<Sprite> sprites)
+    IEnumerator SetUpTiles(List<Sprite> sprites)
     {
         int index = 0;
-        float spacing = tileSize * 0.44f;
-        Vector2 offset = new Vector2(-((cols - -1) * spacing) / 2, ((rows - -1) * spacing) / 2);
+        Vector2 offset = new Vector2(-((cols - -1) * spacingX) / 2, ((rows - -1) * spacingY) / 2);
 
         for (int i = 1; i <= rows; i++)
         {
             for (int j = 1; j <= cols; j++)
             {
-                Vector2 pos = new Vector2(j * spacing + offset.x, -i * spacing + offset.y);
+                yield return new WaitForEndOfFrame();
+                Vector2 pos = new Vector2(j * spacingX + offset.x, -i * spacingY + offset.y - offsetYAxis);
                 GameObject newTile = Instantiate(tilePrefab, pos, Quaternion.identity, transform);
                 Tile tileScript = newTile.GetComponent<Tile>();
                 if (tileScript != null && index < sprites.Count)
                 {
                     tileScript.SetSprite(sprites[index++]);
                     tileScript.gridPosition = new Vector2Int(i, j);
+                    tileScript.transform.DOScale(1, 0.3f).SetEase(Ease.OutBack).From(0);
                     grid[i, j] = newTile;
                 }
             }
@@ -113,6 +114,7 @@ public class GameManager : MonoBehaviour
             DrawConnectionLine(tile1.transform.position, tile2.transform.position, pos1, pos2);
             return true;
         }
+
         return false;
     }
 
@@ -126,6 +128,7 @@ public class GameManager : MonoBehaviour
             {
                 lineRenderer.SetPosition(i, GridPositionToWorldPosition(path[i]));
             }
+
             StartCoroutine(ClearLineAfterDelay(0.2f));
         }
         else
@@ -136,9 +139,8 @@ public class GameManager : MonoBehaviour
 
     Vector3 GridPositionToWorldPosition(Vector2Int gridPos)
     {
-        float spacing = tileSize * 0.44f;
-        Vector2 offset = new Vector2(-((cols - -1) * spacing) / 2, ((rows - -1) * spacing) / 2);
-        return new Vector3(gridPos.y * spacing + offset.x, -gridPos.x * spacing + offset.y, 0);
+        Vector2 offset = new Vector2(-((cols - -1) * spacingX) / 2, ((rows - -1) * spacingY) / 2);
+        return new Vector3(gridPos.y * spacingX + offset.x, -gridPos.x * spacingY + offset.y, 0);
     }
 
     IEnumerator ClearLineAfterDelay(float delay)
@@ -173,6 +175,7 @@ public class GameManager : MonoBehaviour
                 path.Add(new Vector2Int(x, pos1.y));
             }
         }
+
         path.Add(pos2);
         return path;
     }
@@ -192,6 +195,7 @@ public class GameManager : MonoBehaviour
         {
             path.Add(corner2);
         }
+
         path.Add(pos2);
         return path;
     }
@@ -212,6 +216,7 @@ public class GameManager : MonoBehaviour
                 return path;
             }
         }
+
         for (int j = 0; j < rows + 2; j++)
         {
             Vector2Int mid1 = new Vector2Int(j, pos1.y);
@@ -224,6 +229,7 @@ public class GameManager : MonoBehaviour
                 return path;
             }
         }
+
         return null;
     }
 
@@ -237,6 +243,7 @@ public class GameManager : MonoBehaviour
             {
                 if (grid[pos1.x, y] != null) return false;
             }
+
             return true;
         }
         else if (pos1.y == pos2.y)
@@ -247,8 +254,10 @@ public class GameManager : MonoBehaviour
             {
                 if (grid[x, pos1.y] != null) return false;
             }
+
             return true;
         }
+
         return false;
     }
 
@@ -268,12 +277,14 @@ public class GameManager : MonoBehaviour
             Vector2Int mid2 = new Vector2Int(pos2.x, i);
             if (IsValidZShape(mid1, mid2, pos1, pos2)) return true;
         }
+
         for (int j = 0; j < rows + 2; j++)
         {
             Vector2Int mid1 = new Vector2Int(j, pos1.y);
             Vector2Int mid2 = new Vector2Int(j, pos2.y);
             if (IsValidZShape(mid1, mid2, pos1, pos2)) return true;
         }
+
         return false;
     }
 
@@ -313,6 +324,7 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+
         return true;
     }
 
@@ -333,6 +345,7 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+
         Shuffle(sprites);
         int index = 0;
         for (int i = 1; i <= rows; i++)
@@ -348,17 +361,6 @@ public class GameManager : MonoBehaviour
                     }
                 }
             }
-        }
-    }
-
-    public void PlaySound(bool isMatch)
-    {
-        if (audioSource == null) return;
-
-        AudioClip clipToPlay = isMatch ? matchSound : mismatchSound;
-        if (clipToPlay != null)
-        {
-            audioSource.PlayOneShot(clipToPlay);
         }
     }
 
@@ -394,7 +396,8 @@ public class GameManager : MonoBehaviour
                         Tile tile2 = grid[x, y].GetComponent<Tile>();
                         if (tile2 == null || tile1 == tile2 || tile2.GetComponent<SpriteRenderer>() == null) continue;
 
-                        if (tile1.GetComponent<SpriteRenderer>().sprite == tile2.GetComponent<SpriteRenderer>().sprite &&
+                        if (tile1.GetComponent<SpriteRenderer>().sprite ==
+                            tile2.GetComponent<SpriteRenderer>().sprite &&
                             CanConnect(tile1, tile2))
                         {
                             lastHintedTile1 = tile1;
@@ -439,4 +442,4 @@ public class GameManager : MonoBehaviour
 
         hintCoroutine = null;
     }
-}         
+}

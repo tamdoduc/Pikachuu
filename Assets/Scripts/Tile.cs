@@ -80,15 +80,15 @@ public class Tile : MonoBehaviour
         bool isMatch = firstSelected.spriteRenderer.sprite == secondSelected.spriteRenderer.sprite &&
                        GameManager.instance.CanConnect(firstSelected, secondSelected);
 
-        if (GameManager.instance != null)
+        /*if (GameManager.instance != null)
         {
             GameManager.instance.PlaySound(isMatch);
-        }
+        }*/
 
         if (isMatch)
         {
-            Destroy(firstSelected.gameObject);
-            Destroy(secondSelected.gameObject);
+            Destroy(firstSelected.gameObject,0.5f);
+            Destroy(secondSelected.gameObject,0.5f);
         }
         else
         {
