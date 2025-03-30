@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 public class Tile : MonoBehaviour
@@ -10,12 +11,13 @@ public class Tile : MonoBehaviour
     public Vector2Int gridPosition;
     [HideInInspector] public GameObject highlightBorder;
 
+    public bool isCanSelect;
+
     void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         if (spriteRenderer == null)
         {
-            Debug.LogError($"SpriteRenderer component not found on {gameObject.name}. Please attach a SpriteRenderer to this GameObject.");
             return;
         }
 
@@ -38,6 +40,7 @@ public class Tile : MonoBehaviour
             Debug.LogWarning($"Cannot set sprite on {gameObject.name}: SpriteRenderer is null.");
             return;
         }
+
         if (sprite != null)
         {
             spriteRenderer.sprite = sprite;
@@ -50,19 +53,30 @@ public class Tile : MonoBehaviour
 
     void OnMouseDown()
     {
-        if (isSelected || GameManager.instance == null || spriteRenderer == null) return;
-
-        isSelected = true;
-        highlightBorder.SetActive(true);
-
-        if (firstSelected == null)
+        if (GameManager.instance.isCanPlay && !GameManager.instance.isCanSelect)
         {
-            firstSelected = this;
-        }
-        else if (firstSelected != this)
-        {
-            secondSelected = this;
-            StartCoroutine(CheckMatchRoutine());
+            if (isSelected || GameManager.instance == null || spriteRenderer == null) return;
+
+            // isSelected = true;
+            isCanSelect = true;
+            highlightBorder.GetComponent<SpriteRenderer>().color = Color.yellow;
+            highlightBorder.SetActive(true);
+            if (firstSelected == null)
+            {
+                firstSelected = this;
+            }
+            else if (firstSelected != this)
+            {
+                secondSelected = this;
+                GameManager.instance.isCanSelect = true;
+                // Debug.Log("????");
+                StartCoroutine(CheckMatchRoutine());
+            }
+            else
+            {
+                firstSelected.highlightBorder.SetActive(false);
+                ResetSelection();
+            }
         }
     }
 
@@ -87,29 +101,65 @@ public class Tile : MonoBehaviour
 
         if (isMatch)
         {
-            Destroy(firstSelected.gameObject,0.5f);
-            Destroy(secondSelected.gameObject,0.5f);
+            Destroy(firstSelected.gameObject, 0.45f);
+            Destroy(secondSelected.gameObject, 0.45f);
+            DOVirtual.DelayedCall(0.3f,
+                (() =>
+                {
+                    GameManager.instance.PlaySmokeParicle(firstSelected.gameObject, secondSelected.gameObject);
+                    ResetSelection();
+                    GameManager.instance.CheckWinLose();
+
+                }));
+            DOVirtual.DelayedCall(0.5f, (() =>
+            {
+               GameManager.instance.NoMoreMoves();
+
+            }));
         }
         else
         {
             if (firstSelected != null && firstSelected.highlightBorder != null)
-                firstSelected.highlightBorder.SetActive(false);
-            if (secondSelected != null && secondSelected.highlightBorder != null)
-                secondSelected.highlightBorder.SetActive(false);
-        }
+            {
+                firstSelected.highlightBorder.GetComponent<SpriteRenderer>().DOColor(Color.red, 0.1f).OnComplete(() =>
+                {
+                    firstSelected.highlightBorder.GetComponent<SpriteRenderer>().color = Color.white;
+                    firstSelected.highlightBorder.SetActive(false);
+                    GameManager.instance.isCanSelect = false;
+                    GameManager.instance.NoMoreMoves();
+                    firstSelected = null;
+                });
+            }
 
-        ResetSelection();
+            if (secondSelected != null && secondSelected.highlightBorder != null)
+            {
+                secondSelected.highlightBorder.GetComponent<SpriteRenderer>().DOColor(Color.red, 0.1f).OnComplete(() =>
+                {
+                    secondSelected.highlightBorder.GetComponent<SpriteRenderer>().color = Color.white;
+                    secondSelected.highlightBorder.SetActive(false);
+                    GameManager.instance.isCanSelect = false;
+                    secondSelected = null;
+                });
+            }
+        }
     }
 
     private void ResetSelection()
     {
         if (firstSelected != null)
+        {
             firstSelected.isSelected = false;
+        }
+
         if (secondSelected != null)
+        {
             secondSelected.isSelected = false;
+        }
 
         firstSelected = null;
         secondSelected = null;
+        GameManager.instance.isCanSelect = false;
+
     }
 
     void OnDestroy()
@@ -133,5 +183,9 @@ public class Tile : MonoBehaviour
         {
             highlightBorder.SetActive(isActive);
         }
+    }
+
+    public void ShowFaild()
+    {
     }
 }

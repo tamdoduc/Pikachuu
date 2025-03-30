@@ -103,7 +103,6 @@ public class GameManagerDuck : MonoBehaviour
             board[firstSelected.row, firstSelected.col] = null;
             board[secondSelected.row, secondSelected.col] = null;
         }
-
         firstSelected = null;
         secondSelected = null;
     }
@@ -116,13 +115,10 @@ public class GameManagerDuck : MonoBehaviour
         int r1 = tile1.row, c1 = tile1.col;
         int r2 = tile2.row, c2 = tile2.col;
 
-        // 1️⃣ Kiểm tra nếu hai ô có thể nối thẳng
         if (IsClearPath(r1, c1, r2, c2)) return true;
 
-        // 2️⃣ Kiểm tra nếu có thể nối qua 1 góc
         if (IsOneCornerPath(r1, c1, r2, c2)) return true;
 
-        // 3️⃣ Kiểm tra nếu có thể nối qua 2 góc (đã sửa lỗi U-shape)
         if (IsTwoCornerPath(r1, c1, r2, c2)) return true;
 
         return false;

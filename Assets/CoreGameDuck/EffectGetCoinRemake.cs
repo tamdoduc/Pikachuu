@@ -2,12 +2,9 @@ using DG.Tweening;
 using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
-
 namespace DevDuck
 {
-    public class EffectGetCoin : MonoBehaviour
+    public class EffectGetCoinRemake : MonoBehaviour
     {
         [SerializeField] GameObject coinParent;
         public Vector3[] initialPos;
@@ -15,19 +12,12 @@ namespace DevDuck
         public GameObject startPosition, destination;
         int coinNum = 10;
         public Vector3 des, originPos;
-        public Text coinText;
+        public TextMeshProUGUI coinText;
 
         // Start is called before the first frame update
         void Start()
         {
             SetStartPosition();
-        }
-        private void Update()
-        {
-            if (Input.GetKeyUp(KeyCode.Space))
-            {
-                RewardParentCoin(10, 10,LoadScene); 
-            }
         }
         private void SetStartPosition()
         {
@@ -98,15 +88,11 @@ namespace DevDuck
                 }
                 coinParent.transform.GetChild(i).DORotate(Vector3.zero, .5f).SetDelay(delay + 0.5f).SetEase(Ease.Flash).OnComplete(() =>
                 {
-                    PlayerPrefs.SetFloat("COIN", PlayerPrefs.GetFloat("COIN") + coinGet);
-                    coinText.text = Mathf.Round(PlayerPrefs.GetFloat("COIN")).ToString();
+                    PlayerPrefs.SetFloat(PlayerPrefsManager.Coin, PlayerPrefs.GetFloat(PlayerPrefsManager.Coin) + coinGet);
+                    coinText.text = Mathf.Round(PlayerPrefs.GetFloat(PlayerPrefsManager.Coin)).ToString();
                 });
 
             }
-        }
-        private void LoadScene()
-        {
-            SceneManager.LoadScene("BrickRacer");
         }
     }
 }

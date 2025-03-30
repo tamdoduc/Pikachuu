@@ -5,7 +5,16 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/PikachuDuck.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
+  - enabled: 1
+    path: Assets/Scenes/Menu.unity
+    guid: e644ed9a3c38aaf44b75403a5f5b1cd3
+  - enabled: 1
+    path: Assets/Scenes/SceneLoadScene.unity
+    guid: e2e193d5b8c639b48868d3ee4311fab2
+  - enabled: 1
+    path: Assets/Scenes/GamePlay.unity
+    guid: d9aa9111162bc334e93bc15c2ffbda8f
   m_configObjects: {}
