@@ -56,7 +56,8 @@ public class DataGame : MonoBehaviour
 #if UNITY_EDITOR
         data = File.ReadAllText("Assets/Resources/Data/DataGame.json");
 #else
-            data = File.ReadAllText("Assets/Resources/Data/DataGame.json");
+            data = Resources.Load<TextAsset>("Data/DataGame").text;
+
 #endif
         result = JsonUtility.FromJson<DataGamePikachu>(data);
         dataPikachu = result;

@@ -58,7 +58,13 @@ public class GameManager : MonoBehaviour
     {
         SetData();
         gameUiManager.AnimStartGame();
-        DOVirtual.DelayedCall(1.5f, () => GenerateBoard());
+        StartCoroutine(DelayedGenerateBoard());
+    }
+
+    IEnumerator DelayedGenerateBoard()
+    {
+        yield return new WaitForSeconds(5f);
+        GenerateBoard();
     }
 
     private void SetData()
@@ -74,6 +80,7 @@ public class GameManager : MonoBehaviour
         if (currentLevel == 0)
         {
             PlayerPrefs.SetInt(PlayerPrefsManager.levelUnlock, 1);
+            currentLevel = 1;
             StartCoroutine(SetUp());
         }
         else
@@ -93,17 +100,22 @@ public class GameManager : MonoBehaviour
     IEnumerator SetUp()
     {
         DataGame.instance.LoadFromJson();
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.5f);
+        Debug.Log("111");
         for (int i = 0; i < DataGame.instance.DataLoaded.Count; i++)
         {
+            Debug.Log("2222");
+
             if (DataGame.instance.DataLoaded[i].level == currentLevel)
             {
+                Debug.Log("3333");
+
                 rows = DataGame.instance.DataLoaded[i].row;
                 cols = DataGame.instance.DataLoaded[i].col;
                 maxTime = DataGame.instance.DataLoaded[i].time;
             }
         }
-
+        yield return new WaitForSeconds(0.5f);
         totalPiece = rows * cols;
         currentTime = maxTime;
         Debug.Log("time : " + maxTime + "  row : " + rows + "   cols: " + cols);
@@ -119,12 +131,16 @@ public class GameManager : MonoBehaviour
 
     public void GenerateBoard()
     {
+        Debug.Log("4444");
+
         lineRenderer.positionCount = 0;
         spacingX = tilePrefab.GetComponent<BoxCollider2D>().size.x;
         spacingY = tilePrefab.GetComponent<BoxCollider2D>().size.y;
         //tilePrefab.GetComponent<BoxCollider2D>().enabled = false;
         grid = new GameObject[rows + 2, cols + 2];
         List<Sprite> usedSprites = GenerateShuffledSprites();
+        Debug.Log("5555");
+
         StartCoroutine(SetUpTiles(usedSprites));
     }
 
@@ -149,14 +165,18 @@ public class GameManager : MonoBehaviour
 
     IEnumerator SetUpTiles(List<Sprite> sprites)
     {
+        Debug.Log("6666");
+
         int index = 0;
         Vector2 offset = new Vector2(-((cols - -1) * spacingX) / 2, ((rows - -1) * spacingY) / 2);
 
         for (int i = 1; i <= rows; i++)
         {
+            Debug.Log("7777");
+
             for (int j = 1; j <= cols; j++)
             {
-                yield return new WaitForEndOfFrame();
+                yield return new WaitForSeconds(0.05f);
                 Vector2 pos = new Vector2(j * spacingX + offset.x, -i * spacingY + offset.y);
                 GameObject newTile = Instantiate(tilePrefab, pos, Quaternion.identity, transform);
                 Tile tileScript = newTile.GetComponent<Tile>();
@@ -170,11 +190,11 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        do
+        NoMoreMoves();
+        /*do
         {
             ShuffleFunction();
-            Debug.Log(">>>>>");
-        } while (!NoMoreMoves());
+        } while (!NoMoreMoves());*/
     }
 
     public bool CanConnect(Tile tile1, Tile tile2)
@@ -403,6 +423,8 @@ public class GameManager : MonoBehaviour
 
     public bool NoMoreMoves()
     {
+        Debug.Log("88888888888");
+
         if (lastHintedTile1 != null && lastHintedTile1 != null && lastHintedTile1.highlightBorder != null)
             lastHintedTile1.SetHighlight(false);
         if (lastHintedTile2 != null && lastHintedTile2 != null && lastHintedTile2.highlightBorder != null)
@@ -619,7 +641,7 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log("Win");
             DOVirtual.DelayedCall(0.7f, (() => CheckTimerShowWin()));
-            PlayerPrefs.SetInt(PlayerPrefsManager.Coin, 10000);
+            PlayerPrefs.SetInt(PlayerPrefsManager.Coin, coin);
             currentLevel++;
             PlayerPrefs.SetInt(PlayerPrefsManager.levelUnlock, currentLevel);
         }

@@ -51,7 +51,7 @@ public class LogicShop : MonoBehaviour
         if (coin >= 100)
         {
             coin = coin -100;
-            hint += 5;
+            hint += 2;
             PlayerPrefs.SetInt(PlayerPrefsManager.Hint, hint);
             PlayerPrefs.SetInt(PlayerPrefsManager.Coin, coin);
             logicMenu.coinText.text = coin.ToString();
