@@ -10,41 +10,38 @@ using Random = UnityEngine.Random;
 
 public enum GAME_STATE
 {
-    EASY,NORMAL,HARD
-    
+    EASY,
+    NORMAL,
+    HARD
 }
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
     public GameObject tilePrefab;
     public Sprite[] pikachuSprites;
-    public int rows, cols;
+    private int rows, cols;
     private GameObject[,] grid;
     public LineRenderer lineRenderer;
-    [Header("Sound Effects")] 
-    public AudioClip matchSound;
+    [Header("Sound Effects")] public AudioClip matchSound;
     public AudioClip mismatchSound;
     private AudioSource audioSource;
-    
-    [Header("Hint Settings")]
-    public float hintHighlightDuration = 1.5f;
+
+    [Header("Hint Settings")] public float hintHighlightDuration = 1.5f;
     public float blinkInterval = 0.3f;
-
     float spacingX, spacingY;
-
     [HideInInspector] public Tile lastHintedTile1, lastHintedTile2;
     private Coroutine hintCoroutine;
-    public float offsetYAxis;
     [Header("Attribute : ")] public float currentTime, maxTime;
     public ParticleSystem smokeParticle1, smokeParticle2;
     [HideInInspector] public int totalPiece;
     public int shuffleAmount, hintAmount;
     public int coin, score;
     public GameUiManager gameUiManager;
-     public bool isCanPlay, isCanSelect, isEndGame;
+    [HideInInspector] public bool isCanPlay, isCanSelect, isEndGame;
     public UiWinLose UiWinLose;
+    private int currentLevel;
 
-    public EffectGetCoinRemake  effectGetCoinRemake;
     private void Awake()
     {
         if (instance == null)
@@ -58,12 +55,10 @@ public class GameManager : MonoBehaviour
     }
 
     void Start()
-    { 
-        currentTime  = maxTime;
+    {
         SetData();
-        totalPiece = rows * cols;
         gameUiManager.AnimStartGame();
-        DOVirtual.DelayedCall(1.5f,(() =>GenerateBoard() )) ;
+        DOVirtual.DelayedCall(1.5f, () => GenerateBoard());
     }
 
     private void SetData()
@@ -75,6 +70,43 @@ public class GameManager : MonoBehaviour
         gameUiManager.SetHintText(hintAmount);
         gameUiManager.SetShuffleText(shuffleAmount);
         gameUiManager.UpdaeCoinText(coin);
+        currentLevel = PlayerPrefs.GetInt(PlayerPrefsManager.levelUnlock);
+        if (currentLevel == 0)
+        {
+            PlayerPrefs.SetInt(PlayerPrefsManager.levelUnlock, 1);
+            StartCoroutine(SetUp());
+        }
+        else
+        {
+            if (currentLevel >= 25)
+            {
+                currentLevel = 25;
+                StartCoroutine(SetUp());
+            }
+            else
+            {
+                StartCoroutine(SetUp());
+            }
+        }
+    }
+
+    IEnumerator SetUp()
+    {
+        DataGame.instance.LoadFromJson();
+        yield return new WaitForSeconds(0.2f);
+        for (int i = 0; i < DataGame.instance.DataLoaded.Count; i++)
+        {
+            if (DataGame.instance.DataLoaded[i].level == currentLevel)
+            {
+                rows = DataGame.instance.DataLoaded[i].row;
+                cols = DataGame.instance.DataLoaded[i].col;
+                maxTime = DataGame.instance.DataLoaded[i].time;
+            }
+        }
+
+        totalPiece = rows * cols;
+        currentTime = maxTime;
+        Debug.Log("time : " + maxTime + "  row : " + rows + "   cols: " + cols);
     }
 
     private void Update()
@@ -90,6 +122,7 @@ public class GameManager : MonoBehaviour
         lineRenderer.positionCount = 0;
         spacingX = tilePrefab.GetComponent<BoxCollider2D>().size.x;
         spacingY = tilePrefab.GetComponent<BoxCollider2D>().size.y;
+        //tilePrefab.GetComponent<BoxCollider2D>().enabled = false;
         grid = new GameObject[rows + 2, cols + 2];
         List<Sprite> usedSprites = GenerateShuffledSprites();
         StartCoroutine(SetUpTiles(usedSprites));
@@ -124,7 +157,7 @@ public class GameManager : MonoBehaviour
             for (int j = 1; j <= cols; j++)
             {
                 yield return new WaitForEndOfFrame();
-                Vector2 pos = new Vector2(j * spacingX + offset.x, -i * spacingY + offset.y - offsetYAxis);
+                Vector2 pos = new Vector2(j * spacingX + offset.x, -i * spacingY + offset.y);
                 GameObject newTile = Instantiate(tilePrefab, pos, Quaternion.identity, transform);
                 Tile tileScript = newTile.GetComponent<Tile>();
                 if (tileScript != null && index < sprites.Count)
@@ -137,7 +170,11 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        NoMoreMoves();
+        do
+        {
+            ShuffleFunction();
+            Debug.Log(">>>>>");
+        } while (!NoMoreMoves());
     }
 
     public bool CanConnect(Tile tile1, Tile tile2)
@@ -175,6 +212,7 @@ public class GameManager : MonoBehaviour
         {
             return true;
         }
+
         return false;
     }
 
@@ -188,6 +226,7 @@ public class GameManager : MonoBehaviour
             {
                 lineRenderer.SetPosition(i, GridPositionToWorldPosition(path[i]));
             }
+
             StartCoroutine(ClearLineAfterDelay(0.2f));
         }
         else
@@ -394,7 +433,7 @@ public class GameManager : MonoBehaviour
                         {
                             lastHintedTile1 = tile1;
                             lastHintedTile2 = tile2;
-                           // hintCoroutine = StartCoroutine(BlinkHintHighlight());
+                            // hintCoroutine = StartCoroutine(BlinkHintHighlight());
                             return true;
                         }
                     }
@@ -418,8 +457,6 @@ public class GameManager : MonoBehaviour
 
     private void ShuffleFunction()
     {
-        Debug.Log("Shuffle ????");
-
         List<Sprite> sprites = new List<Sprite>();
         for (int i = 1; i <= rows; i++)
         {
@@ -457,7 +494,7 @@ public class GameManager : MonoBehaviour
     public void Hint()
     {
         Debug.Log("Hinttttt");
-        if (hintAmount <= 0|| !isCanPlay) return;
+        if (hintAmount <= 0 || !isCanPlay) return;
         hintAmount--;
         PlayerPrefs.SetInt(PlayerPrefsManager.Hint, hintAmount);
         gameUiManager.SetHintText(hintAmount);
@@ -545,8 +582,6 @@ public class GameManager : MonoBehaviour
         Duck.PlayParticle(smokeParticle1);
         Duck.PlayParticle(smokeParticle2);
         GetCoin();
-
-       
     }
 
     public void GetCoin()
@@ -572,7 +607,7 @@ public class GameManager : MonoBehaviour
                 isEndGame = true;
                 Debug.Log("Lose");
                 UiWinLose.ShowLosePanel();
-                PlayerPrefs.SetInt(PlayerPrefsManager.Coin,coin);
+                PlayerPrefs.SetInt(PlayerPrefsManager.Coin, coin);
             }
         }
     }
@@ -584,9 +619,12 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log("Win");
             DOVirtual.DelayedCall(0.7f, (() => CheckTimerShowWin()));
-            PlayerPrefs.SetInt(PlayerPrefsManager.Coin,coin);
+            PlayerPrefs.SetInt(PlayerPrefsManager.Coin, 10000);
+            currentLevel++;
+            PlayerPrefs.SetInt(PlayerPrefsManager.levelUnlock, currentLevel);
         }
     }
+
     public void CheckTimerShowWin()
     {
         ManagerGame.TIME_SCALE = 0;

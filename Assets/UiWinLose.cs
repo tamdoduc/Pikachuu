@@ -21,6 +21,7 @@ public class UiWinLose : MonoBehaviour
     public GameObject shadowPanel;
     public CanvasGroup coinBar;
 
+    public TextMeshProUGUI nextOrRePlay;
 
     private void Awake()
     {
@@ -38,13 +39,13 @@ public class UiWinLose : MonoBehaviour
     private void OnClickReplayButton()
     {
         Scene scene = SceneManager.GetActiveScene();
-        
         ManagerScene.ins.LoadScene(scene.name);
       //  SceneManager.LoadSceneAsync(scene.name);
     }
 
     public void ShowWinPanel1Star()
     {
+        nextOrRePlay.text = "Next";
         coinText.text = GameManager.instance.coin.ToString();
         shadowPanel.gameObject.SetActive(true);
         winTitle.gameObject.SetActive(true);
@@ -67,6 +68,7 @@ public class UiWinLose : MonoBehaviour
 
     public void ShowWinPanel2Star()
     {
+        nextOrRePlay.text = "Next";
         coinText.text = GameManager.instance.coin.ToString();
         shadowPanel.gameObject.SetActive(true);
         winTitle.gameObject.SetActive(true);
@@ -89,6 +91,7 @@ public class UiWinLose : MonoBehaviour
 
     public void ShowWinPanel3Star()
     {
+        nextOrRePlay.text = "Next";
         coinText.text = GameManager.instance.coin.ToString();
         shadowPanel.gameObject.SetActive(true);
         winTitle.gameObject.SetActive(true);
@@ -111,6 +114,7 @@ public class UiWinLose : MonoBehaviour
 
     public void ShowLosePanel()
     {
+        nextOrRePlay.text = "Replay";
         coinText.text = GameManager.instance.coin.ToString();
         shadowPanel.gameObject.SetActive(true);
         loseTitle.gameObject.SetActive(true);

@@ -60,8 +60,9 @@ public class AudioManager : MonoBehaviour
             GameObject obj = new GameObject();
             AudioSource aus = obj.AddComponent<AudioSource>();
             sourcesMusic.Add(aus);
+            aus.transform.SetParent(transform) ;
             aus.clip = clip;
-            aus.volume = 0.15f;
+            aus.volume = 1f;
             aus.loop = true;
             if (PlayerPrefs.GetInt("MUSIC") != 1)
             {
@@ -91,9 +92,10 @@ public class AudioManager : MonoBehaviour
 
             GameObject obj = new GameObject();
             AudioSource aus = obj.AddComponent<AudioSource>();
+            aus.transform.SetParent(transform) ;
             sourcesSound.Add(aus);
             aus.clip = clip;
-            aus.volume = 0.25f;
+            aus.volume = 1f;
             if (PlayerPrefs.GetInt("SOUND") != 1)
             {
                 aus.PlayOneShot(clip);

@@ -9,4 +9,5 @@ public class PlayerPrefsManager
    public const string Shuffle = "SHUFFLE";
    public const string LevelUnlock = "LEVELUNLOCK";
    public const string isGetDefaultItems = "ISGETDEFAULTS";
+   public const string levelUnlock = "LEVELUNLOCK";
 }

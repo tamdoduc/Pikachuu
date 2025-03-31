@@ -101,6 +101,7 @@ public class Tile : MonoBehaviour
 
         if (isMatch)
         {
+            AudioManager.instance.PlaySound("Correct");
             Destroy(firstSelected.gameObject, 0.45f);
             Destroy(secondSelected.gameObject, 0.45f);
             DOVirtual.DelayedCall(0.3f,
@@ -114,11 +115,11 @@ public class Tile : MonoBehaviour
             DOVirtual.DelayedCall(0.5f, (() =>
             {
                GameManager.instance.NoMoreMoves();
-
             }));
         }
         else
         {
+            AudioManager.instance.PlaySound("Fail");
             if (firstSelected != null && firstSelected.highlightBorder != null)
             {
                 firstSelected.highlightBorder.GetComponent<SpriteRenderer>().DOColor(Color.red, 0.1f).OnComplete(() =>

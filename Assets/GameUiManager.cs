@@ -53,7 +53,6 @@ public class GameUiManager : MonoBehaviour
     private void OnClickRePlayButton()
     {
         Scene scene =  SceneManager.GetActiveScene();
-        Debug.Log("Replay ??");
         ManagerScene.ins.LoadScene(scene.name);
     }
 

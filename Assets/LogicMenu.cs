@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using DevDuck;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -14,12 +15,21 @@ public class LogicMenu : MonoBehaviour
     public Button quitButton;
 
     [Header("Top UI")] public Button shopButton;
-    public Button SoundButton,musicButton;
     public Button inAppButton, coinsButton;
     public GameObject shopPanel, tabInAppPanel, tabCoinPanel;
     public Button closeShopButton;
     
     public TextMeshProUGUI coinText,shuffleText,hintText;
+    
+    [Header("Settings:")]
+    public Sprite soundOn, soundOff,musicOn,musicOff;
+    
+    public Image soundIcon,musicIcon;
+    
+    public Button musicButton,soundButton,settingsButton;
+    public GameObject settingsPanel;
+    public List<GameObject> elementsOnSettings = new List<GameObject>();
+    public Button closeSettingsButton;
     private void Awake()
     {
         playButton.onClick.AddListener(OnClickEasyButton);
@@ -28,11 +38,67 @@ public class LogicMenu : MonoBehaviour
         inAppButton.onClick.AddListener(OnClickInAppButton);
         coinsButton.onClick.AddListener(OnClickCoinsButton);
         closeShopButton.onClick.AddListener(OnClickCloseShopButton);
+        musicButton.onClick.AddListener(OnClickMusicButton);
+        soundButton.onClick.AddListener(OnClickSoundButton);
+        settingsButton.onClick.AddListener(OnClickSettingsButton);
+        closeSettingsButton.onClick.AddListener(OnclickCloseSettingsButton);
+    }
+
+    private void OnclickCloseSettingsButton()
+    {
+       settingsPanel.SetActive(false);
+    }
+
+    private void OnClickSettingsButton()
+    {
+        settingsPanel.SetActive(true);
+        for (int i = 0; i < elementsOnSettings.Count; i++)
+        {
+            var a = i;
+            elementsOnSettings[i].transform.DOScale(1,0.2f).SetEase(Ease.OutBack).SetDelay(a*0.2f).From(0);
+        }
+    }
+
+    private void OnClickSoundButton()
+    {
+        int sound = PlayerPrefs.GetInt("SOUND");
+        if (sound == 0)
+        {
+            PlayerPrefs.SetInt("SOUND", 1);
+            soundIcon.sprite = soundOff;
+            AudioManager.instance.StopPlaySound();
+        }
+        else
+        {
+            PlayerPrefs.SetInt("SOUND", 0);
+            soundIcon.sprite = soundOn;
+            AudioManager.instance.ContinuePlaySound();;
+
+        }
+    }
+
+    private void OnClickMusicButton()
+    {
+        int music = PlayerPrefs.GetInt("MUSIC");
+        if (music == 0)
+        {
+            PlayerPrefs.SetInt("MUSIC", 1);
+            musicIcon.sprite = musicOff;
+            AudioManager.instance.StopPlayMusic();
+        }
+        else
+        {
+            PlayerPrefs.SetInt("MUSIC", 0);
+            musicIcon.sprite = musicOn;
+            AudioManager.instance.ContinuePlayMusic();
+
+        }
     }
 
     private void Start()
     {
         GetData();
+        AudioManager.instance.PlayBGMSound("BGM");
     }
 
     public void GetData()
