@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class LogicShop : MonoBehaviour
+public class LogicShop : Singleton<LogicShop>
 {
     public Button x2Hint, x5Hint,x2Shuffle;
 

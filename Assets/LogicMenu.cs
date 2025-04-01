@@ -9,7 +9,7 @@ using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Color = System.Drawing.Color;
 
-public class LogicMenu : MonoBehaviour
+public class LogicMenu : Singleton<LogicMenu>
 { 
     public Button playButton;
     public Button quitButton;
@@ -137,6 +137,7 @@ public class LogicMenu : MonoBehaviour
 
     private void OnClickShopButton()
     {
+        OnClickInAppButton();
         shopPanel.gameObject.SetActive(true);
     }
 
